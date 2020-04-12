@@ -4,6 +4,8 @@
 #include "R_PID.h"
 #include "Timer.h"
 #include "MPU6000.h"
+#include <NMEAGPS.h>
+#include <GPSport.h>
 //output
 Servo motor;
 Servo steering;
@@ -26,11 +28,18 @@ R_PID pid(Kp, Ki, Kd, 500, -500);
 MPU6000 accel(53);
 int level;
 
+//gps
+static NMEAGPS  gps;
+static gps_fix  fix;
+NeoGPS::Location_t base( -253448688L, 1310324914L );
+bool homepoint = false;
+
 //timer
 Timer timer(10);
 
 void setup() {
   Serial.begin(9600);
+  Serial.println( F("Looking for GPS device on " GPS_PORT_NAME) );
   sbus.begin(SBUS_IN, sbusNonBlocking);
   steering.attach(STEERING);
   motor.attach(MOTOR1);
@@ -48,6 +57,7 @@ void setup() {
 }
 
 void loop() {
+  GPSloop();
   getChannels();
   if(timer.checkT()){
     if(sbus.getChannel(CH_AUX2) >= 1800){
@@ -94,4 +104,13 @@ void setOutputs(){
   steering.writeMicroseconds(steeringCH+STEERINGTRIM);
   //motor.writeMicroseconds(limitor(motor1CH,1300,1700));
   motor.writeMicroseconds(motor1CH);
+}
+static void GPSloop()
+{
+  while (gps.available( gpsPort )) {
+    fix = gps.read();
+    if(fix.valid.location){
+      
+    }
+  }
 }

@@ -9,6 +9,9 @@
 #define CH_AUX3 7
 //INPUT
 #define SBUS_IN A8
+#define HI 1800
+#define MID 1500
+#define LO 1200
 //OUTPUT
 #define OUT1 12 
 #define OUT2 11 
@@ -28,8 +31,10 @@
 # define C_LED_PIN        25  //blue
 # define LED_ON           LOW
 # define LED_OFF          HIGH
-# define USB_MUX_PIN 23
+# define USB_MUX_PIN      23
+# define LIGHTS           A0
 
 //SETTINGS
 #define STEERINGTRIM -100
 #define FAILSAFE 1500
+#define DEBUG

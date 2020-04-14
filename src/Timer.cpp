@@ -10,11 +10,8 @@ Timer::Timer(unsigned int ms)
 bool Timer::checkT(){
     _currentTime = millis();
     _elapsedTime = (double)(_currentTime - _previousTime);
-    if(_elapsedTime >= _ms){
-      _previousTime = _currentTime;
+    if(_elapsedTime = _ms)
       return true;
-    }
-    else{
+    else
       return false;
-    }
 }

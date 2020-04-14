@@ -7,8 +7,8 @@
 #include <NMEAGPS.h>
 #include <GPSport.h>
 #include <MSP.h>
-#include "MSP_OSD.h"
-#include "flt_modes.h"
+#include "src/MSP_OSD.h"
+#include "src/flt_modes.h"
 #include "OSD_positions_config.h"
 
 //output
@@ -254,6 +254,7 @@ msp_battery_state_t battery_state = {0};
 msp_name_t name = {0};
 msp_raw_gps_t raw_gps = {0};
 msp_comp_gps_t comp_gps = {0};
+msp_attitude_t attitude = {0};
 
 void send_msp_to_airunit()
 {
@@ -285,8 +286,8 @@ void send_msp_to_airunit()
     msp.send(MSP_RAW_GPS, &raw_gps, sizeof(raw_gps));
 
     //MSP_COMP_GPS
-    comp_gps.distanceToHome = (int16_t)fix.location.DistanceKm( base );;
-    comp_gps.directionToHome = fix.location.BearingToDegrees(base);
+    comp_gps.distanceToHome = (int16_t)fix.location.DistanceKm( base );
+    comp_gps.directionToHome = fix.location.BearingToDegrees( base );
     msp.send(MSP_COMP_GPS, &comp_gps, sizeof(comp_gps));
     
     //MSP_OSD_CONFIG
@@ -315,8 +316,8 @@ void send_osd_config()
     msp_osd_config.osd_main_batt_voltage_pos = osd_main_batt_voltage_pos;
     msp_osd_config.osd_craft_name_pos = osd_craft_name_pos;
     msp_osd_config.osd_throttle_pos_pos = osd_throttle_pos_pos;
-    //msp_osd_config.osd_gps_speed_pos = osd_gps_speed_pos;
-    msp_osd_config.osd_gps_sats_pos = osd_gps_sats_pos;
+    msp_osd_config.osd_gps_speed_pos = osd_gps_speed_pos;
+    //msp_osd_config.osd_gps_sats_pos = osd_gps_sats_pos;
     msp_osd_config.osd_altitude_pos = osd_altitude_pos;
     msp_osd_config.osd_avg_cell_voltage_pos = osd_avg_cell_voltage_pos;
     msp_osd_config.osd_gps_lon_pos = osd_gps_lon_pos;

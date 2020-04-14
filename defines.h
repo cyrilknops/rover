@@ -37,4 +37,5 @@
 //SETTINGS
 #define STEERINGTRIM -100
 #define FAILSAFE 1500
-#define DEBUG
+#define DEBUG			//uncomment for debug
+#define NEEDGPSTOARM	//uncomment for 3dfix before arm

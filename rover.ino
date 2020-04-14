@@ -36,10 +36,22 @@ static NMEAGPS  gps;
 static gps_fix  fix;
 NeoGPS::Location_t base( 508296400L, 55396607L );
 bool homepoint = false;
+float speedKm;
+float setSpeed;
+bool gpsfix;
+
+//flags
+bool arm = false;
+int mode = 0;
 
 //timer
 Timer timer(10);
 Timer debugT(500);
+Timer second(1000);
+
+//debug
+char* modes[10] = {"manual", "no wheely", "speed limiter"};
+
 void setup() {
   DEBUG_PORT.begin(9600);
   DEBUG_PORT.println( F("Looking for GPS device on " GPS_PORT_NAME) );
@@ -58,22 +70,22 @@ void setup() {
 
   //lights
   pinMode(LIGHTS, OUTPUT);
+  pinMode(A_LED_PIN, OUTPUT);
+  pinMode(B_LED_PIN, OUTPUT);
+  pinMode(C_LED_PIN, OUTPUT);
 }
 
 void loop() {
   getChannels();
-  if(timer.checkT()){
-    if(modeCH >= HI){
-      if(motor1CH > 1500){
-        antiwheel();
-      }
-    }
-  }
-  if(auxCH >= HI){
-    //level = accel.AcceDeg(2);
-    digitalWrite(LIGHTS, HIGH);
-  }else{
-     digitalWrite(LIGHTS, LOW);
+  switch(getMode()){
+    case 1:
+      antiwheel();
+      break;
+    case 2:
+      cruisecontrol(5); //give max speed in km 
+      break;
+    default:
+      break;
   }
   armed();
   GPSloop();
@@ -83,25 +95,65 @@ void loop() {
   #endif
   delay(20);
 }
+int getMode(){
+  if(modeCH >= HI){
+      mode = 1;
+  }else if(modeCH == MID){
+      mode = 2;
+  }else if(modeCH <= LO){
+    mode = 0;
+  }
+  if(auxCH >= HI){
+    digitalWrite(LIGHTS, HIGH);
+  }else{
+     digitalWrite(LIGHTS, LOW);
+  }
+  return mode;
+}
 int limitor(int pwm, int minVal, int maxVal){
   return map(pwm, 1000, 2000, minVal, maxVal);
 }
+void cruisecontrol(float speed){
+    // if(speedKm > speed){
+    //   motor1CH = 1500;
+    // }
+    DEBUG_PORT.print("CH-IN:");
+    DEBUG_PORT.print(motor1CH);
+    DEBUG_PORT.print("PID-In:");
+    DEBUG_PORT.print(speedKm);
+    DEBUG_PORT.print(" PID-Out:");
+    Output = pid.calculate(speed, speedKm);
+    DEBUG_PORT.print(Output);
+    motor1CH = motor1CH - Output*50;
+    if(motor1CH < 1500)
+      motor1CH = 1500;
+    DEBUG_PORT.print(" CH-Out:");
+    DEBUG_PORT.println(motor1CH);
+}
 void antiwheel(){
-  DEBUG_PORT.print("CH-IN:");
-  DEBUG_PORT.print(motor1CH);
-  DEBUG_PORT.print("PID-In:");
-  DEBUG_PORT.print(accel.AcceDeg(2)-level);
-  DEBUG_PORT.print(" PID-Out:");
-  Output = pid.calculate(level, (accel.AcceDeg(2)-level)*10);
-  DEBUG_PORT.print(Output);
-  motor1CH = motor1CH - Output;
-  if(motor1CH < 1500)
-    motor1CH = 1500;
-  DEBUG_PORT.print(" CH-Out:");
-  DEBUG_PORT.println(motor1CH);
+  if(motor1CH > 1500){
+    DEBUG_PORT.print("CH-IN:");
+    DEBUG_PORT.print(motor1CH);
+    DEBUG_PORT.print("PID-In:");
+    DEBUG_PORT.print(accel.AcceDeg(2)-level);
+    DEBUG_PORT.print(" PID-Out:");
+    Output = pid.calculate(level, (accel.AcceDeg(2)-level));
+    DEBUG_PORT.print(Output*10);
+    motor1CH = motor1CH - Output;
+    if(motor1CH < 1500)
+      motor1CH = 1500;
+    DEBUG_PORT.print(" CH-Out:");
+    DEBUG_PORT.println(motor1CH);
+  }
 }
 void armed(){
-  if(armedCH < 1800){
+  #ifndef NEEDGPSTOARM
+    gpsfix = true;
+  #endif
+  if(armedCH > HI && gpsfix){
+    arm = true;
+  }else{
+    arm = false;
     motor1CH = 1500;
   }
 }
@@ -119,25 +171,33 @@ void setOutputs(){
 }
 static void GPSloop()
 {
-  while (gps.available( gpsPort )) {
+  if(gps.available( gpsPort )) {
     fix = gps.read();
     if(fix.valid.location){
+      gpsfix = true;
+      digitalWrite(A_LED_PIN, LED_ON);
 //      float range = fix.location.DistanceKm( base );
 //      DEBUG_PORT.print( F("Range: ") );
 //      DEBUG_PORT.print( range );
 //      DEBUG_PORT.println( F(" Km") );
-        float speedKm = fix.speed_kph();
-        DEBUG_PORT.print( F("speed: ") );
-        DEBUG_PORT.print( speedKm );
-        DEBUG_PORT.println( F(" Km/h") );
+      speedKm = fix.speed_kph();
+      DEBUG_PORT.print( F("speed: ") );
+      DEBUG_PORT.print( speedKm );
+      DEBUG_PORT.println( F(" Km/h") );
     }else{
+      gpsfix = false;
       DEBUG_PORT.print(".");
+      digitalWrite(A_LED_PIN,LED_OFF);
     }
   }
 }
 static void debug(){
   if(debugT.checkT()){
-  DEBUG_PORT.print("Channels: ");
+  DEBUG_PORT.print("Armed: ");
+  DEBUG_PORT.print(arm);
+  DEBUG_PORT.print(" Mode: ");
+  DEBUG_PORT.print(modes[mode]);
+  DEBUG_PORT.print(" Channels: ");
   DEBUG_PORT.print(motor1CH);
   DEBUG_PORT.print(", ");
   DEBUG_PORT.print(steeringCH);

@@ -4,7 +4,7 @@
 //234 -> not visible. Horizontally 2048-2074(spacing 1), vertically 2048-2528(spacing 32). 26 characters X 15 lines
 
 //currently working elements
-const uint16_t osd_rssi_value_pos = 2179;
+const uint16_t osd_rssi_value_pos = 2465;
 const uint16_t osd_avg_cell_voltage_pos = 2516;
 const uint16_t osd_gps_lon_pos = 2433;
 const uint16_t osd_gps_lat_pos = 2401;
